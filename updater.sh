@@ -29,7 +29,6 @@ else
 fi
 
 announce Updating snaps...
-# tput setaf 1 // experiement
 sudo snap refresh
 
 announce Updating apt packages...

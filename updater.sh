@@ -19,8 +19,14 @@ announce() {
 	echo -e "\n$text_reset$text_bold$@$text_reset"
 }
 
+directory=$(dirname $0)
+
 announce Updating tldr cache...
-tldr --update_cache
+if [[ -e "$directory/tldr_update.sh" ]]; then
+	"$directory/tldr_update.sh" # add support for customizable tldr update script to account for variantions in tldr implementation
+else
+	tldr --update_cache # fallback
+fi
 
 announce Updating snaps...
 # tput setaf 1 // experiement
@@ -30,6 +36,6 @@ announce Updating apt packages...
 sudo apt update && sudo apt upgrade
 
 announce Updating Gradle...
-$(dirname $0)/gradle_update.sh
+"$directory/gradle_update.sh"
 
 echo -e "$text_reset"

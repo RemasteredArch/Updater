@@ -2,7 +2,7 @@
 This is my personal update script, designed for Ubuntu 20.04 and 22.04.
 
 It updates:
-* [`tldr`](https://tldr.sh/) cache using [`./tldr_update.sh`](./tldr_update.sh) (to account for variantions in the implementation of `tldr`), or, if that doesn't exist, `tldr --update_cache`
+* [`tldr`](https://tldr.sh/) cache using [`./tldr_update.sh`](./tldr_update.sh) (primarily to account for variantions in the implementation of `tldr`), or, if that doesn't exist, `tldr -u`
 * `snap` packages using `sudo snap refresh`
 * `apt` packages using `sudo apt update && sudo apt upgrade` (no `-y`)
 * [`Gradle`](https://gradle.org/) using [`./gradle_update.sh`](./gradle_update.sh)

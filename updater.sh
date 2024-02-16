@@ -25,7 +25,7 @@ announce Updating tldr cache...
 if [[ -e "$directory/tldr_update.sh" ]]; then
 	"$directory/tldr_update.sh" # add support for customizable tldr update script to account for variantions in tldr implementation
 else
-	tldr --update_cache # fallback
+	tldr -u # fallback
 fi
 
 announce Updating snaps...

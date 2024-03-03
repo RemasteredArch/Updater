@@ -28,7 +28,7 @@ else
 	tldr -u # fallback
 fi
 
-announce Updating snaps...
+announce Updating Snaps...
 sudo snap refresh
 
 announce Updating apt packages...
@@ -36,5 +36,8 @@ sudo apt update && sudo apt upgrade
 
 announce Updating Gradle...
 "$directory/gradle_update.sh"
+
+announce Updating Rust...
+rustup upgrade
 
 echo -e "$text_reset"

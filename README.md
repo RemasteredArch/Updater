@@ -7,7 +7,9 @@ It updates:
 * `apt` packages using `sudo apt update && sudo apt upgrade` (no `-y`)
 * [`Gradle`](https://gradle.org/) using [`./gradle_update.sh`](./gradle_update.sh)
   * This installs to `$GRADLE_HOME/install` (by default `$HOME/.gradle/install`) and adds a symlink to `$HOME/.local/bin`
-  * This does *not* add `$HOME/.local/bin` to `$PATH`
+    * This does *not* add `$HOME/.local/bin` to `$PATH`
+  * This checks for a `gradle_lock` file in the script's directory. If `gradle_lock` exists, this will ignore the Gradle API and refer to it for the latest version
+    * `gradle_lock` should contain nothing but the version as it appears in the "version" field of [the Gradle  API's version list](https://services.gradle.org/versions/all)
 
 ## License
 Updater is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.

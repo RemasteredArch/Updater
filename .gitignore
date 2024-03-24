@@ -1,2 +1,5 @@
 # ignore per-device tldr update script
 /tldr_update.sh
+
+# let user control gradle version
+/gradle_lock

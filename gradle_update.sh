@@ -13,103 +13,117 @@
 # You should have received a copy of the GNU General Public License along with Updater. If not, see <https://www.gnu.org/licenses/>.
 
 if [[ -z $GRADLE_USER_HOME ]]; then
-	GRADLE_USER_HOME=$HOME/.gradle
+  GRADLE_USER_HOME=$HOME/.gradle
 fi
 install_directory="$GRADLE_USER_HOME/install"
 
 bin_dir="$HOME/.local/bin"
 
+script_directory="$(dirname $0)"
+
 announce() {
-	reset="\e[0m"
-	#bold="\e[1m"
-	bold="\e[0m" # disables bold output
-	gray="\e[90m"
-	echo -e "$reset$bold$@$reset$gray"
+  reset="\e[0m"
+  #bold="\e[1m"
+  bold="\e[0m" # disables bold output
+  gray="\e[90m"
+  echo -e "$reset$bold$@$reset$gray"
 }
 
-announce "Checking online version..."
-api=$(curl "https://services.gradle.org/versions/current" --silent)
-current_version=$(echo "$api" | jq .version --raw-output)
+if [[ -e "$script_directory" ]]; then
+  announce "Checking latest version from gradle_lock..."
+  current_version=$(cat $script_directory/gradle_lock)
+else
+  announce "Checking latest version from online..."
+  api=$(curl "https://services.gradle.org/versions/current" --silent)
+  current_version=$(echo "$api" | jq .version --raw-output)
+fi
+
 announce "Checking installed version..."
 is_installed=$(command -v gradle 2> /dev/null)
 
 install_gradle() {
-	if [[ -d "$install_directory" ]]; then
-		announce "Removing existing directory..."
-		rm -r "$install_directory"
-	fi
+  if [[ -d "$install_directory" ]]; then
+    announce "Removing existing directory..."
+    rm -r "$install_directory"
+  fi
 
-	announce "Getting ready..."
+  announce "Getting ready..."
 
-	mkdir "$install_directory"
+  mkdir "$install_directory"
 
-	cd "$install_directory"
+  cd "$install_directory"
 
-	download_url=$(echo "$api" | jq .downloadUrl --raw-output)
+  if [[ -e "$script_directory" ]]; then
+    announce "[gradle_lock...]"
+    download_url=$(curl "https://services.gradle.org/distributions/gradle-$current_version-bin.zip" --silent)
+  else
+    announce "[online]..."
+    download_url=$(echo "$api" | jq .downloadUrl --raw-output)
+  fi
 
-	announce "Downloading..."
+  announce "Downloading..."
 
-	wget "$download_url" --no-verbose
+  wget "$download_url" --no-verbose
 
-	announce "Unzipping..."
+  announce "Unzipping..."
 
-	unzip -q ./gradle*.zip
+  unzip -q ./gradle*.zip
 
-	announce "Cleaning up zip..."
+  announce "Cleaning up zip..."
 
-	rm ./gradle*.zip
+  rm ./gradle*.zip
 
-	announce "Installing to $install_directory..."
+  announce "Installing to $install_directory..."
 
-	dir=$(ls)
+  dir=$(ls)
 
-	mv $dir/* .
+  mv $dir/* .
 
-	announce "Cleaning up..."
+  announce "Cleaning up..."
 
-	rmdir "$dir"
+  rmdir "$dir"
 
-	announce "Adding symlink to $HOME/.local/bin..."
+  announce "Adding symlink to $HOME/.local/bin..."
 
-	if [[ ! -d "$bin_dir" ]]; then
-		mkdir "$HOME/.local/bin/"
-	fi
+  if [[ ! -d "$bin_dir" ]]; then
+    mkdir "$HOME/.local/bin/"
+  fi
 
-	symlink="$bin_dir/gradle"
+  symlink="$bin_dir/gradle"
 
-	 if [[ -e "$symlink" ]]; then
-		 rm "$symlink"
-	 fi
+   if [[ -e "$symlink" ]]; then
+     rm "$symlink"
+   fi
 
-	ln -s "$install_directory/bin/gradle" "$symlink"
+  ln -s "$install_directory/bin/gradle" "$symlink"
 
-	echo -e "\e[0mAll done! Don't forget to add ~/.local/bin to \$PATH, if it isn't yet."
+  echo -e "\e[0mAll done! Don't forget to add ~/.local/bin to \$PATH, if it isn't yet."
 
-	exit
+  exit
 
 }
 
 if [[ -z $is_installed ]]; then
-	announce "No version of Gradle detected! Install now? (y/n):"
-	read -n 1 answer
-	echo
-	if [[ $answer == "y" ]]; then
-		install_gradle
-	else
-		exit
-	fi
+  announce "No version of Gradle detected! Install now? (y/n):"
+  read -n 1 answer
+  echo
+  if [[ $answer == "y" ]]; then
+    install_gradle
+  else
+    exit
+  fi
 fi
 
 installed_version=$(gradle --version | grep "Gradle" | grep --only-matching "[0-9]\.[0-9]" 2> /dev/null)
 if [[ $current_version > $installed_version ]]; then
-	announce "Currently installed version is out of date ($installed_version vs $current_version). Update? (y/n)"
-	read -n 1 answer
-	echo
-	if [[ $answer == "y" ]]; then
-		install_gradle
-	else
-		exit
-	fi
+  announce "Currently installed version is out of date ($installed_version vs $current_version). Update? (y/n)"
+  read -n 1 answer
+  echo
+  if [[ $answer == "y" ]]; then
+    install_gradle
+  else
+    exit
+  fi
 fi
 
 announce "Gradle is up to date! ($installed_version == $current_version)"

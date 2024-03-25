@@ -29,7 +29,7 @@ announce() {
   echo -e "$reset$bold$@$reset$gray"
 }
 
-if [[ -e "$script_directory" ]]; then
+if [[ -e "$script_directory/gradle_lock" ]]; then
   announce "Checking latest version from gradle_lock..."
   current_version=$(cat $script_directory/gradle_lock)
 else
@@ -53,11 +53,9 @@ install_gradle() {
 
   cd "$install_directory"
 
-  if [[ -e "$script_directory" ]]; then
-    announce "[gradle_lock...]"
+  if [[ -e "$script_directory/gradle_lock" ]]; then
     download_url=$(curl "https://services.gradle.org/distributions/gradle-$current_version-bin.zip" --silent)
   else
-    announce "[online]..."
     download_url=$(echo "$api" | jq .downloadUrl --raw-output)
   fi
 

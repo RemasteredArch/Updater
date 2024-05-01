@@ -12,26 +12,25 @@
 #
 # You should have received a copy of the GNU General Public License along with Updater. If not, see <https://www.gnu.org/licenses/>.
 
-if [[ -z $GRADLE_USER_HOME ]]; then
-  GRADLE_USER_HOME=$HOME/.gradle
-fi
+GRADLE_USER_HOME="${GRADLE_USER_HOME:-"$HOME/.gradle"}"
+
 install_directory="$GRADLE_USER_HOME/install"
 
 bin_dir="$HOME/.local/bin"
 
-script_directory="$(dirname $0)"
+script_directory="$(dirname "$(realpath "$0")")"
 
 announce() {
   reset="\e[0m"
   #bold="\e[1m"
   bold="\e[0m" # disables bold output
   gray="\e[90m"
-  echo -e "$reset$bold$@$reset$gray"
+  echo -e "$reset$bold$*$reset$gray"
 }
 
-if [[ -e "$script_directory/gradle_lock" ]]; then
+if [ -r "$script_directory/gradle_lock" ]; then
   announce "Checking latest version from gradle_lock..."
-  current_version=$(cat $script_directory/gradle_lock)
+  current_version=$(cat "$script_directory/gradle_lock")
 else
   announce "Checking latest version from online..."
   api=$(curl "https://services.gradle.org/versions/current" --silent)
@@ -42,19 +41,19 @@ announce "Checking installed version..."
 is_installed=$(command -v gradle 2> /dev/null)
 
 install_gradle() {
-  if [[ -d "$install_directory" ]]; then
+  [ -d "$install_directory" ] && {
     announce "Removing existing directory..."
     rm -r "$install_directory"
-  fi
+  }
 
   announce "Getting ready..."
 
-  mkdir "$install_directory"
+  mkdir -p "$install_directory"
 
-  cd "$install_directory"
+  cd "$install_directory" || exit
 
-  if [[ -e "$script_directory/gradle_lock" ]]; then
-    download_url=$(curl "https://services.gradle.org/distributions/gradle-$current_version-bin.zip" --silent)
+  if [ -r "$script_directory/gradle_lock" ]; then
+    download_url="https://services.gradle.org/distributions/gradle-$current_version-bin.zip"
   else
     download_url=$(echo "$api" | jq .downloadUrl --raw-output)
   fi
@@ -75,7 +74,7 @@ install_gradle() {
 
   dir=$(ls)
 
-  mv $dir/* .
+  mv "$dir"/* .
 
   announce "Cleaning up..."
 
@@ -83,15 +82,11 @@ install_gradle() {
 
   announce "Adding symlink to $HOME/.local/bin..."
 
-  if [[ ! -d "$bin_dir" ]]; then
-    mkdir "$HOME/.local/bin/"
-  fi
+  [ ! -d "$bin_dir" ] && mkdir -p "$HOME/.local/bin/"
 
   symlink="$bin_dir/gradle"
 
-   if [[ -e "$symlink" ]]; then
-     rm "$symlink"
-   fi
+  [ -e "$symlink" ] && rm "$symlink"
 
   ln -s "$install_directory/bin/gradle" "$symlink"
 
@@ -101,28 +96,27 @@ install_gradle() {
 
 }
 
-if [[ -z $is_installed ]]; then
+[ -z "$is_installed" ] && {
   announce "No version of Gradle detected! Install now? (y/n):"
-  read -n 1 answer
+
+  read -rn 1 answer
   echo
-  if [[ $answer == "y" ]]; then
-    install_gradle
-  else
-    exit
-  fi
-fi
+
+  [[ "$answer" == "y" ]] && install_gradle
+  exit
+}
 
 installed_version=$(gradle --version | grep "Gradle" | grep --only-matching "[0-9]\.[0-9]" 2> /dev/null)
-if [[ $current_version > $installed_version ]]; then
+
+[[ $current_version > $installed_version ]] && {
   announce "Currently installed version is out of date ($installed_version vs $current_version). Update? (y/n)"
-  read -n 1 answer
+
+  read -rn 1 answer
   echo
-  if [[ $answer == "y" ]]; then
-    install_gradle
-  else
-    exit
-  fi
-fi
+
+  [[ "$answer" == "y" ]] && install_gradle
+  exit
+}
 
 announce "Gradle is up to date! ($installed_version == $current_version)"
 

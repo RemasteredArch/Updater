@@ -12,32 +12,52 @@
 #
 # You should have received a copy of the GNU General Public License along with Updater. If not, see <https://www.gnu.org/licenses/>.
 
-text_reset="\e[0m"
-text_bold="\e[97m\e[100m\e[1m" # bold white text on a gray background
+text_reset='\e[0m'
+text_bold='\e[97m\e[100m\e[1m' # Bold white text on a gray background
 
 announce() {
-	echo -e "\n$text_reset$text_bold$@$text_reset"
+    echo -e "\n$text_reset$text_bold$*$text_reset"
 }
 
-directory=$(dirname $0)
+# Detect if a program or alias exists
+has() {
+  [ "$(type "$1" 2> /dev/null)" ]
+}
 
-announce Updating tldr cache...
-if [[ -e "$directory/tldr_update.sh" ]]; then
-	"$directory/tldr_update.sh" # add support for customizable tldr update script to account for variantions in tldr implementation
-else
-	tldr -u # fallback
-fi
+directory=$(dirname "$0")
 
-announce Updating Snaps...
-sudo snap refresh
+has tldr && {
+    announce 'Updating tldr cache...'
+    # Adds support for customizable tldr update script to account for variations in tldr
+    # implementation
+    if [ -e "$directory/tldr_update.sh" ]; then
+        "$directory/tldr_update.sh"
+    else
+        tldr -u # Fallback
+    fi
+}
 
-announce Updating apt packages...
-sudo apt update && sudo apt upgrade
+has snap && {
+    announce 'Updating Snaps...'
+    sudo snap refresh
+}
 
-announce Updating Gradle...
-"$directory/gradle_update.sh"
+has apt && {
+    announce 'Updating apt packages...'
+    sudo apt update && sudo apt upgrade
+}
 
-announce Updating Rust...
-rustup upgrade
+has gradle && {
+    announce 'Updating Gradle...'
+    "$directory/gradle_update.sh"
+}
 
-echo -e "$text_reset"
+has rustup && {
+    announce 'Updating Rust...'
+    rustup upgrade
+}
+
+has cargo-install-update && {
+    announce 'Updating Rust packages...'
+    cargo install-update --all
+}

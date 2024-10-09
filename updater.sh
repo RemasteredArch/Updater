@@ -52,6 +52,11 @@ has gradle && {
     "$directory/gradle_update.sh"
 }
 
+has bun && {
+    announce 'Updating Bun'
+    bun upgrade
+}
+
 has rustup && {
     announce 'Updating Rust...'
     rustup upgrade

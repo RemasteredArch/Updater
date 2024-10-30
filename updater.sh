@@ -66,3 +66,18 @@ has cargo-install-update && {
     announce 'Updating Rust packages...'
     cargo install-update --all
 }
+
+has docker && {
+    announce 'Checking Docker version'
+
+    _docker_installed_version="$(dpkg --list | grep 'docker-ce ' | awk '{print $3}')"
+    _docker_current_version="$(apt-cache madison docker-ce | head -1 | awk '{ print $3 }')"
+
+    if [ "$_docker_installed_version" != "$_docker_current_version" ]; then
+        echo "New docker version available! ($_docker_installed_version => $_docker_current_version)"
+    else
+        echo "Docker up to date! ($_docker_installed_version)"
+    fi
+
+    unset _docker_installed_version _docker_current_version
+}

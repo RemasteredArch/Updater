@@ -67,17 +67,37 @@ has cargo-install-update && {
     cargo install-update --all
 }
 
+has act && {
+    announce 'Checking Act version'
+
+    _act_installed_version="v$(act --version | awk '{print $3}')"
+    _act_latest_version="$(
+        curl --fail --silent --show-error --location \
+            --header 'Accept:application/json' \
+            'https://github.com/nektos/act/releases/latest' \
+         | jq --raw-output '.tag_name'
+    )"
+
+    if [ "$_act_installed_version" != "$_act_latest_version" ]; then
+        echo "New version of Act available! ($_act_installed_version => $_act_latest_version)"
+    else
+        echo "Act up to date! ($_act_installed_version)"
+    fi
+
+    unset _act_installed_version _act_latest_version
+}
+
 has docker && {
     announce 'Checking Docker version'
 
     _docker_installed_version="$(dpkg --list | grep 'docker-ce ' | awk '{print $3}')"
-    _docker_current_version="$(apt-cache madison docker-ce | head -1 | awk '{ print $3 }')"
+    _docker_latest_version="$(apt-cache madison docker-ce | head -1 | awk '{ print $3 }')"
 
-    if [ "$_docker_installed_version" != "$_docker_current_version" ]; then
-        echo "New docker version available! ($_docker_installed_version => $_docker_current_version)"
+    if [ "$_docker_installed_version" != "$_docker_latest_version" ]; then
+        echo "New docker version available! ($_docker_installed_version => $_docker_latest_version)"
     else
         echo "Docker up to date! ($_docker_installed_version)"
     fi
 
-    unset _docker_installed_version _docker_current_version
+    unset _docker_installed_version _docker_latest_version
 }

@@ -25,6 +25,7 @@ has() {
 }
 
 directory=$(dirname "$0")
+user_binary_dir="$HOME/.local/bin"
 
 has tldr && {
     announce 'Updating tldr cache...'
@@ -80,6 +81,20 @@ has act && {
 
     if [ "$_act_installed_version" != "$_act_latest_version" ]; then
         echo "New version of Act available! ($_act_installed_version => $_act_latest_version)"
+        echo -n 'Update? (y/n): '
+        read -rn 1 answer
+        echo
+
+        [[ "$answer" == "y" ]] && {
+            temp_file="$(mktemp)"
+            curl --proto '=https' --tlsv1.2 --fail --silent --show-error --location \
+                'https://raw.githubusercontent.com/nektos/act/master/install.sh' \
+                -o "$temp_file"
+            chmod u+x "$temp_file"
+            "$temp_file" -b "$user_binary_dir"
+            rm "$temp_file"
+            unset temp_file
+        }
     else
         echo "Act up to date! ($_act_installed_version)"
     fi

@@ -28,7 +28,7 @@ announce() {
 script_directory="$(dirname "$(realpath "$0")")"
 cd "$script_directory"
 
-has docker || {
+command -v docker || {
     echo 'Docker not available!' >&2
     exit 1
 }
@@ -40,4 +40,4 @@ announce 'Installing perf'
 sudo dpkg -i 'perf.deb'
 
 announce 'Cleaning up'
-rm perf.deb
+rm -f ./perf.deb

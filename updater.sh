@@ -43,7 +43,7 @@ case "${1:-''}" in
         ;;
 esac
 
-should tldr && {
+has tldr && {
     announce 'Updating tldr cache...'
     # Adds support for customizable tldr update script to account for variations in tldr
     # implementation
@@ -54,12 +54,12 @@ should tldr && {
     fi
 }
 
-should snap && {
+has snap && {
     announce 'Updating Snaps...'
     sudo snap refresh
 }
 
-should apt && {
+has apt && {
     announce 'Updating apt packages...'
     sudo apt update && sudo apt upgrade
 }
@@ -69,17 +69,17 @@ should gradle && {
     "$directory/gradle_update.sh"
 }
 
-should bun && {
+has bun && {
     announce 'Updating Bun'
     bun upgrade
 }
 
-should rustup && {
+has rustup && {
     announce 'Updating Rust...'
     rustup upgrade
 }
 
-should cargo-install-update && {
+has cargo-install-update && {
     announce 'Updating Rust packages...'
     cargo install-update --all
 }
@@ -119,10 +119,10 @@ should act && {
     unset _act_installed_version _act_latest_version
 }
 
-should docker && {
+has docker && {
     announce 'Checking Docker version'
 
-    _docker_installed_version="$(dpkg --list | grep 'docker-ce ' | awk '{print $3}')"
+    _docker_installed_version="$(dpkg --list | grep 'docker-ce ' | awk '{ print $3 }')"
     # For some reason, `apt-cache madison docker-ce` cause a pipefail error if output is piped
     # directly into `head`, so it is stored in the variably temporarily.
     #

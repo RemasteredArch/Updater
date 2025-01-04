@@ -1,4 +1,4 @@
-#! /bin/env bash
+#! /usr/bin/env bash
 
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
@@ -12,6 +12,8 @@
 #
 # You should have received a copy of the GNU General Public License along with Updater. If not, see <https://www.gnu.org/licenses/>.
 
+set -euo pipefail
+
 text_reset='\e[0m'
 text_bold='\e[97m\e[100m\e[1m' # Bold white text on a gray background
 
@@ -24,10 +26,24 @@ has() {
   [ "$(type "$1" 2> /dev/null)" ]
 }
 
+# Whether or not to update a program.
+should() {
+    [ "$install" = 'true' ] && return
+
+    has "$1"
+}
+
 directory=$(dirname "$0")
 user_binary_dir="$HOME/.local/bin"
 
-has tldr && {
+install='false'
+case "${1:-''}" in
+    -i | --i )
+        install='true'
+        ;;
+esac
+
+should tldr && {
     announce 'Updating tldr cache...'
     # Adds support for customizable tldr update script to account for variations in tldr
     # implementation
@@ -38,37 +54,37 @@ has tldr && {
     fi
 }
 
-has snap && {
+should snap && {
     announce 'Updating Snaps...'
     sudo snap refresh
 }
 
-has apt && {
+should apt && {
     announce 'Updating apt packages...'
     sudo apt update && sudo apt upgrade
 }
 
-has gradle && {
+should gradle && {
     announce 'Updating Gradle...'
     "$directory/gradle_update.sh"
 }
 
-has bun && {
+should bun && {
     announce 'Updating Bun'
     bun upgrade
 }
 
-has rustup && {
+should rustup && {
     announce 'Updating Rust...'
     rustup upgrade
 }
 
-has cargo-install-update && {
+should cargo-install-update && {
     announce 'Updating Rust packages...'
     cargo install-update --all
 }
 
-has act && {
+should act && {
     announce 'Checking Act version'
 
     _act_installed_version="v$(act --version | awk '{print $3}')"
@@ -102,11 +118,16 @@ has act && {
     unset _act_installed_version _act_latest_version
 }
 
-has docker && {
+should docker && {
     announce 'Checking Docker version'
 
     _docker_installed_version="$(dpkg --list | grep 'docker-ce ' | awk '{print $3}')"
-    _docker_latest_version="$(apt-cache madison docker-ce | head -1 | awk '{ print $3 }')"
+    # For some reason, `apt-cache madison docker-ce` cause a pipefail error if output is piped
+    # directly into `head`, so it is stored in the variably temporarily.
+    #
+    # TODO: Use an alternative to `madison`.
+    _docker_latest_version="$(apt-cache madison docker-ce)"
+    _docker_latest_version="$(echo "$_docker_latest_version" | head -n1 | awk '{ print $3 }')"
 
     if [ "$_docker_installed_version" != "$_docker_latest_version" ]; then
         echo "New docker version available! ($_docker_installed_version => $_docker_latest_version)"

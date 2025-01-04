@@ -90,10 +90,9 @@ install_gradle() {
 
   ln -s "$install_directory/bin/gradle" "$symlink"
 
-  echo -e "\e[0mAll done! Don't forget to add ~/.local/bin to \$PATH, if it isn't yet."
+  echo -e "\e[0mAll done! Don't forget to add ~/.local/bin to \$PATH if it isn't yet."
 
   exit
-
 }
 
 [ -z "$is_installed" ] && {

@@ -87,7 +87,8 @@ should cargo-install-update && {
 should act && {
     announce 'Checking Act version'
 
-    _act_installed_version="v$(act --version | awk '{print $3}')"
+    _act_installed_version=''
+    has act && _act_installed_version="v$(act --version | awk '{print $3}')"
     _act_latest_version="$(
         curl --fail --silent --show-error --location \
             --header 'Accept:application/json' \

@@ -3,5 +3,5 @@ Version: 5.15.0-microsoft-standard-WSL2
 Section: base
 Priority: optional
 Architecture: amd64
-Maintainer: buty4649@gmail.com
+Maintainer: RemasteredArch <81265470+RemasteredArch@users.noreply.github.com>
 Description: Perf performance analysis tool for Linux

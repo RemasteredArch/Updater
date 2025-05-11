@@ -25,14 +25,6 @@ announce() {
 has() {
   [ "$(type "$1" 2> /dev/null)" ]
 }
-
-# Whether or not to update a program.
-should() {
-    [ "$install" = 'true' ] && return
-
-    has "$1"
-}
-
 directory=$(dirname "$0")
 user_binary_dir="$HOME/.local/bin"
 
@@ -42,6 +34,61 @@ case "${1:-''}" in
         install='true'
         ;;
 esac
+
+# Whether or not to update a program.
+should() {
+    [ "$install" = 'true' ] && return
+
+    has "$1"
+}
+
+github_binary_install() {
+    local repo="$1"
+    local binary="$2"
+    local installed_version="$3"
+    local expected_tarball_filename="$4"
+
+    announce "Checking $binary version"
+
+    latest_version="$(
+        curl --fail --silent --show-error --location \
+            --header 'Accept:application/json' \
+            "https://github.com/$repo/releases/latest" \
+        | jq --raw-output '.tag_name'
+    )"
+    local latest_version_no_v=''
+    latest_version_no_v="$(echo "$latest_version" | sed 's/^v\(.*\)$/\1/')"
+
+    # I'm intentionally using the input as a formatting string.
+    #
+    # shellcheck disable=SC2059
+    expected_tarball_filename="$(printf "$expected_tarball_filename" "$latest_version_no_v")"
+
+    if [ "$installed_version" == "$latest_version" ]; then
+        echo "$binary up to date! ($installed_version)"
+        return 0
+    fi
+
+    echo "New version of $binary available! ($installed_version => $latest_version)"
+    echo -n 'Update? (y/n): '
+    read -rn 1 answer
+    echo
+
+    [[ "$answer" == 'y' ]] || {
+        return 0
+    }
+
+    local temp_dir
+    temp_dir="$(mktemp --directory)"
+
+    curl --proto '=https' --tlsv1.2 --fail --silent --show-error --location \
+        "https://github.com/$repo/releases/download/$latest_version/$expected_tarball_filename" \
+        -o "$temp_dir/$expected_tarball_filename"
+    tar xf "$temp_dir/$expected_tarball_filename" --directory="$temp_dir"
+
+    cp "$temp_dir/$binary" "$user_binary_dir/$binary"
+    chmod u+x "$user_binary_dir/$binary"
+}
 
 has tldr && {
     announce 'Updating tldr cache...'
@@ -117,6 +164,21 @@ should act && {
     fi
 
     unset _act_installed_version _act_latest_version
+}
+
+should git-credential-oauth && {
+    _git_credential_installed_version=''
+    has git-credential-oauth && {
+        _git_credential_installed_version="v$(git-credential-oauth version | awk '{print $2}')"
+    }
+
+    github_binary_install \
+        'hickford/git-credential-oauth' \
+        'git-credential-oauth' \
+        "$_git_credential_installed_version" \
+        'git-credential-oauth_%s_linux_amd64.tar.gz'
+
+    unset _git_credential_installed_version
 }
 
 has docker && {

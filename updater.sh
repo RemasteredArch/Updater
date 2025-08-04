@@ -200,3 +200,9 @@ has docker && {
 
     unset _docker_installed_version _docker_latest_version
 }
+
+has bob && {
+    announce 'Updating Neovim version'
+
+    bob update
+}
